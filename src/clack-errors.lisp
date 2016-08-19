@@ -8,6 +8,9 @@
            :*lack-middleware-clack-errors*))
 (in-package :clack-errors)
 
+(defparameter *asset-path* "/__clack-errors/"
+  "Base path for serving static files.  Meant to be unlikely to collide with real paths.")
+
 (defparameter *dev-css-path*
   (merge-pathnames
    #p"static/style-dev.css"
@@ -75,10 +78,7 @@
                             :url (getf env :path-info)
                             :method (getf env :request-method)
                             :query (getf env :query-string)
-                            :css (concatenate 'string
-                                              (uiop:read-file-string *dev-css-path*)
-                                              (uiop:read-file-string *highlight-css*))
-                            :js (uiop:read-file-string *highlight-js*)
+                            :asset-path *asset-path*
                             :env (loop for (key value) on env by #'cddr collecting
                                    (list :key key
                                          :value value)))))
@@ -92,19 +92,23 @@
 
 (defparameter *clack-error-middleware*
   (lambda (app &key (debug t) (prod-render #'render-prod))
-    (lambda (env)
-      (block nil
-        (handler-bind ((error
-                         (lambda (condition)
-                           (let ((backtrace (with-output-to-string (stream)
-                                              (write-string (print-backtrace condition :output nil)
-                                                            stream))))
-                             (return (list 500
-                                           '(:content-type "text/html")
-                                           (list
-                                             (if debug
-                                                 (render backtrace condition env)
-                                                 (funcall prod-render condition env)))))))))
-          (funcall app env))))))
+    (flet ((error-middleware (env)
+           (block nil
+             (handler-bind ((error
+                             (lambda (condition)
+                               (let ((backtrace (with-output-to-string (stream)
+                                                  (write-string (print-backtrace condition :output nil)
+                                                                stream))))
+                                 (return (list 500
+                                               '(:content-type "text/html")
+                                               (list
+                                                (if debug
+                                                    (render backtrace condition env)
+                                                    (funcall prod-render condition env)))))))))
+               (funcall app env)))))
+      (lack:builder (clack.middleware.static:<clack-middleware-static>
+                     :root (asdf:system-relative-pathname :clack-errors "static/")
+                     :path *asset-path*)
+                    #'error-middleware))))
 
 (setf (symbol-value '*lack-middleware-clack-errors*) *clack-error-middleware*)

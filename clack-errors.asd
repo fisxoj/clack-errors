@@ -8,6 +8,7 @@
                :closer-mop
                :local-time
                :trivial-backtrace
+               :lack-middleware-static
                :djula
                :cl-ppcre)
   :components ((:module "src"

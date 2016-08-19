@@ -2,9 +2,7 @@
 <html lang="en">
   <head>
     <title>{{ name }} @ {{ url }}</title>
-    <style>
-     {{ css | safe }}
-    </style>
+    <link rel="stylesheet" src="{{ asset-path }}style-prod.css">
   </head>
   <body>
     <header>

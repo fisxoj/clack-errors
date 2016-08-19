@@ -2,12 +2,9 @@
 <html lang="en">
   <head>
     <title>{{ name }} @ {{ url }}</title>
-    <style>
-     {{ css | safe }}
-    </style>
-    <script>
-     {{ js | safe }}
-    </script>
+    <link rel="stylesheet" href="{{ asset-path }}style-dev.css">
+    <link rel="stylesheet" href="{{ asset-path }}highlight-lisp/themes/github.css">
+    <script src="{{ asset-path }}highlight-lisp/highlight-lisp.js"></script>
   </head>
   <body>
     <header>
